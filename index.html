@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buddy Browser Demo</title>
+    <style>
+      :root {
+        --bg: #122b36;
+        --bg-soft: #183645;
+        --panel: rgba(14, 39, 49, 0.82);
+        --line: #99a815;
+        --line-soft: rgba(153, 168, 21, 0.38);
+        --text: #e6ebe7;
+        --muted: #a6b4b1;
+        --danger: #d9786c;
+        --warn: #b99a24;
+        --violet: #c26ea3;
+        --track: #394658;
+        --green: #4d725a;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          "SF Mono", "JetBrains Mono", "IBM Plex Mono", "Roboto Mono",
+          monospace;
+        background:
+          radial-gradient(circle at top left, rgba(153, 168, 21, 0.08), transparent 24rem),
+          linear-gradient(180deg, #173441 0%, var(--bg) 52%, #102630 100%);
+        color: var(--text);
+      }
+
+      .shell {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0 48px;
+      }
+
+      .terminal-line {
+        color: var(--muted);
+        font-size: 0.95rem;
+        letter-spacing: 0.01em;
+        margin-bottom: 10px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 22px;
+        grid-template-columns: 1.15fr 0.85fr;
+        align-items: start;
+      }
+
+      .card-shell,
+      .control-shell,
+      .gallery-shell {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--line-soft);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+
+      .card-shell::before,
+      .control-shell::before,
+      .gallery-shell::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border: 1px solid var(--line);
+        pointer-events: none;
+      }
+
+      .card-shell {
+        padding: 26px;
+      }
+
+      .control-shell {
+        padding: 24px;
+      }
+
+      .gallery-shell {
+        margin-top: 22px;
+        padding: 20px 22px 22px;
+      }
+
+      .meta-label {
+        color: var(--muted);
+        font-size: 0.86rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 10px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 14px;
+      }
+
+      .controls label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .controls input {
+        width: 100%;
+        border: 1px solid var(--line-soft);
+        background: rgba(11, 29, 36, 0.92);
+        color: var(--text);
+        padding: 13px 14px;
+        font: inherit;
+        outline: none;
+      }
+
+      .controls input:focus {
+        border-color: var(--line);
+        box-shadow: 0 0 0 3px rgba(153, 168, 21, 0.12);
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        padding: 11px 14px;
+        font: inherit;
+        cursor: pointer;
+        transition:
+          transform 160ms ease,
+          background 160ms ease,
+          color 160ms ease;
+      }
+
+      button:hover {
+        background: rgba(153, 168, 21, 0.1);
+        transform: translateY(-1px);
+      }
+
+      button.primary {
+        background: rgba(153, 168, 21, 0.14);
+      }
+
+      .small-note {
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+
+      .data-grid {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .data-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px dashed rgba(166, 180, 177, 0.16);
+        padding-bottom: 10px;
+      }
+
+      .data-row span:first-child {
+        color: var(--muted);
+      }
+
+      .buddy-card {
+        display: grid;
+        gap: 0;
+      }
+
+      .section {
+        border: 1px solid var(--line);
+        padding: 16px 18px;
+        margin-top: -1px;
+      }
+
+      .heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--line);
+        font-weight: 700;
+        font-size: clamp(1.5rem, 3vw, 2.15rem);
+      }
+
+      .stars {
+        letter-spacing: -0.08em;
+      }
+
+      .name {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+        line-height: 1.02;
+        margin: 0;
+      }
+
+      .personality {
+        margin-top: 8px;
+        color: var(--text);
+        font-style: italic;
+        font-size: clamp(1rem, 1.8vw, 1.25rem);
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: minmax(160px, 240px) 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+
+      .sprite-wrap {
+        display: grid;
+        gap: 10px;
+        justify-items: start;
+      }
+
+      .sprite {
+        margin: 0;
+        color: var(--line);
+        font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+        line-height: 1.08;
+        letter-spacing: 0.02em;
+        text-shadow: 0 0 18px rgba(153, 168, 21, 0.08);
+      }
+
+      .face-pill {
+        border: 1px solid var(--line-soft);
+        color: var(--muted);
+        padding: 8px 10px;
+        min-width: 100%;
+      }
+
+      .stats {
+        display: grid;
+        gap: 10px;
+      }
+
+      .stat {
+        display: grid;
+        grid-template-columns: 120px 1fr 50px;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+      }
+
+      .track {
+        height: 20px;
+        background: var(--track);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .fill {
+        height: 100%;
+      }
+
+      .rarity-line {
+        color: var(--line);
+        font-size: 1.7rem;
+        font-weight: 700;
+      }
+
+      .hatch-line {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      .species-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 10px;
+      }
+
+      .species-chip {
+        border: 1px solid var(--line-soft);
+        color: var(--muted);
+        background: rgba(10, 25, 32, 0.55);
+        padding: 10px 11px;
+        text-align: left;
+      }
+
+      .species-chip.active {
+        color: var(--text);
+        border-color: var(--line);
+        background: rgba(153, 168, 21, 0.12);
+      }
+
+      .json-box {
+        margin-top: 18px;
+        border: 1px solid rgba(166, 180, 177, 0.18);
+        background: rgba(9, 19, 25, 0.6);
+        padding: 14px;
+        max-height: 280px;
+        overflow: auto;
+      }
+
+      .json-box pre {
+        margin: 0;
+        font: inherit;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      @media (max-width: 920px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .shell {
+          width: min(100vw - 20px, 100%);
+          padding-top: 18px;
+        }
+
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stat {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="terminal-line">~/Projects/claude-code git:(main) buddy browser demo</div>
+      <div class="terminal-line" id="promptLine">node buddy-standalone/main.ts hatch alice</div>
+
+      <section class="hero">
+        <article class="card-shell">
+          <div class="meta-label">Deterministic Companion Card</div>
+          <div class="buddy-card">
+            <section class="section">
+              <div class="heading">
+                <span id="speciesName">Cactus</span>
+                <span class="stars" id="rarityStars">★★</span>
+              </div>
+            </section>
+
+            <section class="section">
+              <h1 class="name" id="companionName">Sleepy Assistant 11</h1>
+              <div class="personality" id="personality">Sleepy, dependable, terminal-side</div>
+            </section>
+
+            <section class="section">
+              <div class="content-grid">
+                <div class="sprite-wrap">
+                  <pre class="sprite" id="sprite"></pre>
+                  <div class="face-pill" id="facePill"></div>
+                </div>
+                <div class="stats">
+                  <div class="data-grid" id="profileGrid"></div>
+                  <div id="statsGrid"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <div class="rarity-line" id="rarityName">UNCOMMON</div>
+              <div class="hatch-line" id="hatchedAt">Hatched: 2026-08-08 00:00:00 UTC</div>
+            </section>
+          </div>
+        </article>
+
+        <aside class="control-shell">
+          <div class="meta-label">Control Deck</div>
+          <div class="controls">
+            <label>
+              User ID
+              <input id="userIdInput" value="alice" spellcheck="false" />
+            </label>
+            <div class="button-row">
+              <button class="primary" id="hatchButton">Hatch</button>
+              <button id="randomButton">Randomize</button>
+              <button id="animateButton">Start Animation</button>
+            </div>
+            <div class="small-note">
+              Same <strong>user ID</strong> always produces the same Buddy. This browser demo keeps the deterministic generation model from the hidden Claude Code feature and visualizes it as a collector-style card.
+            </div>
+            <div class="data-grid">
+              <div class="data-row"><span>Inspiration Seed</span><span id="seedValue"></span></div>
+              <div class="data-row"><span>Shiny Variant</span><span id="shinyValue"></span></div>
+              <div class="data-row"><span>Animation State</span><span id="animState">Idle</span></div>
+            </div>
+            <div class="json-box">
+              <pre id="jsonOutput"></pre>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="gallery-shell">
+        <div class="meta-label">Species Gallery</div>
+        <div class="species-grid" id="speciesGrid"></div>
+      </section>
+    </main>
+
+    <script>
+      const SPECIES = [
+        "duck", "goose", "blob", "cat", "dragon", "octopus", "owl",
+        "penguin", "turtle", "snail", "ghost", "axolotl", "capybara",
+        "cactus", "robot", "rabbit", "mushroom", "chonk"
+      ];
+      const EYES = ["·", "✦", "×", "◉", "@", "°"];
+      const HATS = ["none", "crown", "tophat", "propeller", "halo", "wizard", "beanie", "tinyduck"];
+      const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"];
+      const RARITY_WEIGHTS = { common: 60, uncommon: 25, rare: 10, epic: 4, legendary: 1 };
+      const RARITY_STARS = { common: "★", uncommon: "★★", rare: "★★★", epic: "★★★★", legendary: "★★★★★" };
+      const STAT_NAMES = ["DEBUGGING", "PATIENCE", "CHAOS", "WISDOM", "SNARK"];
+      const RARITY_FLOOR = { common: 5, uncommon: 15, rare: 25, epic: 35, legendary: 50 };
+      const ADJECTIVES = ["curious", "chaotic", "sleepy", "patient", "snarky", "sparkly", "earnest", "dramatic", "mischievous", "gentle"];
+      const TITLES = ["Debugger", "Gremlin", "Archivist", "Watcher", "Companion", "Sprite", "Assistant", "Noodle"];
+      const HAT_LINES = {
+        none: "",
+        crown: "   \\^^^/    ",
+        tophat: "   [___]    ",
+        propeller: "    -+-     ",
+        halo: "   (   )    ",
+        wizard: "    /^\\     ",
+        beanie: "   (___)    ",
+        tinyduck: "    ,>      "
+      };
+      const BODIES = {
+        duck: [["            ","    __      ","  <({E} )___  ","   (  ._>   ","    `--´    "],["            ","    __      ","  <({E} )___  ","   (  ._>   ","    `--´~   "],["            ","    __      ","  <({E} )___  ","   (  .__>  ","    `--´    "]],
+        goose: [["            ","     ({E}>    ","     ||     ","   _(__)_   ","    ^^^^    "],["            ","    ({E}>     ","     ||     ","   _(__)_   ","    ^^^^    "],["            ","     ({E}>>   ","     ||     ","   _(__)_   ","    ^^^^    "]],
+        blob: [["            ","   .----.   ","  ( {E}  {E} )  ","  (      )  ","   `----´   "],["            ","  .------.  "," (  {E}  {E}  ) "," (        ) ","  `------´  "],["            ","    .--.    ","   ({E}  {E})   ","   (    )   ","    `--´    "]],
+        cat: [["            ","   /\\_/\\    ","  ( {E}   {E})  ","  (  ω  )   ","  (\")_(\")   "],["            ","   /\\_/\\    ","  ( {E}   {E})  ","  (  ω  )   ","  (\")_(\")~  "],["            ","   /\\-/\\    ","  ( {E}   {E})  ","  (  ω  )   ","  (\")_(\")   "]],
+        dragon: [["            ","  /^\\  /^\\  "," <  {E}  {E}  > "," (   ~~   ) ","  `-vvvv-´  "],["            ","  /^\\  /^\\  "," <  {E}  {E}  > "," (        ) ","  `-vvvv-´  "],["   ~    ~   ","  /^\\  /^\\  "," <  {E}  {E}  > "," (   ~~   ) ","  `-vvvv-´  "]],
+        octopus: [["            ","   .----.   ","  ( {E}  {E} )  ","  (______)  ","  /\\/\\/\\/\\  "],["            ","   .----.   ","  ( {E}  {E} )  ","  (______)  ","  \\/\\/\\/\\/  "],["     o      ","   .----.   ","  ( {E}  {E} )  ","  (______)  ","  /\\/\\/\\/\\  "]],
+        owl: [["            ","   /\\  /\\   ","  (({E})({E}))  ","  (  ><  )  ","   `----´   "],["            ","   /\\  /\\   ","  (({E})({E}))  ","  (  ><  )  ","   .----.   "],["            ","   /\\  /\\   ","  (({E})(-))  ","  (  ><  )  ","   `----´   "]],
+        penguin: [["            ","  .---.     ","  ({E}>{E})     "," /(   )\\    ","  `---´     "],["            ","  .---.     ","  ({E}>{E})     "," |(   )|    ","  `---´     "],["  .---.     ","  ({E}>{E})     "," /(   )\\    ","  `---´     ","   ~ ~      "]],
+        turtle: [["            ","   _,--._   ","  ( {E}  {E} )  "," /[______]\\ ","  ``    ``  "],["            ","   _,--._   ","  ( {E}  {E} )  "," /[______]\\ ","   ``  ``   "],["            ","   _,--._   ","  ( {E}  {E} )  "," /[======]\\ ","  ``    ``  "]],
+        snail: [["            "," {E}    .--.  ","  \\  ( @ )  ","   \\_`--´   ","  ~~~~~~~   "],["            ","  {E}   .--.  ","  |  ( @ )  ","   \\_`--´   ","  ~~~~~~~   "],["            "," {E}    .--.  ","  \\  ( @  ) ","   \\_`--´   ","   ~~~~~~   "]],
+        ghost: [["            ","   .----.   ","  / {E}  {E} \\  ","  |      |  ","  ~`~``~`~  "],["            ","   .----.   ","  / {E}  {E} \\  ","  |      |  ","  `~`~~`~`  "],["    ~  ~    ","   .----.   ","  / {E}  {E} \\  ","  |      |  ","  ~~`~~`~~  "]],
+        axolotl: [["            ","}~(______)~{","}~({E} .. {E})~{","  ( .--. )  ","  (_/  \\_)  "],["            ","~}(______){~","~}({E} .. {E}){~","  ( .--. )  ","  (_/  \\_)  "],["            ","}~(______)~{","}~({E} .. {E})~{","  (  --  )  ","  ~_/  \\_~  "]],
+        capybara: [["            ","  n______n  "," ( {E}    {E} ) "," (   oo   ) ","  `------´  "],["            ","  n______n  "," ( {E}    {E} ) "," (   Oo   ) ","  `------´  "],["    ~  ~    ","  u______n  "," ( {E}    {E} ) "," (   oo   ) ","  `------´  "]],
+        cactus: [["            "," n  ____  n "," | |{E}  {E}| | "," |_|    |_| ","   |    |   "],["            ","    ____    "," n |{E}  {E}| n "," |_|    |_| ","   |    |   "],[" n        n "," |  ____  | "," | |{E}  {E}| | "," |_|    |_| ","   |    |   "]],
+        robot: [["            ","   .[||].   ","  [ {E}  {E} ]  ","  [ ==== ]  ","  `------´  "],["            ","   .[||].   ","  [ {E}  {E} ]  ","  [ -==- ]  ","  `------´  "],["     *      ","   .[||].   ","  [ {E}  {E} ]  ","  [ ==== ]  ","  `------´  "]],
+        rabbit: [["            ","   (\\__/)   ","  ( {E}  {E} )  "," =(  ..  )= ","  (\")__(\")  "],["            ","   (|__/)   ","  ( {E}  {E} )  "," =(  ..  )= ","  (\")__(\")  "],["            ","   (\\__/)   ","  ( {E}  {E} )  "," =( .  . )= ","  (\")__(\")  "]],
+        mushroom: [["            "," .-o-OO-o-. ","(__________)","   |{E}  {E}|   ","   |____|   "],["            "," .-O-oo-O-. ","(__________)","   |{E}  {E}|   ","   |____|   "],["   . o  .   "," .-o-OO-o-. ","(__________)","   |{E}  {E}|   ","   |____|   "]],
+        chonk: [["            ","  /\\    /\\  "," ( {E}    {E} ) "," (   ..   ) ","  `------´  "],["            ","  /\\    /|  "," ( {E}    {E} ) "," (   ..   ) ","  `------´  "],["            ","  /\\    /\\  "," ( {E}    {E} ) "," (   ..   ) ","  `------´~ "]]
+      };
+      const IDLE_SEQUENCE = [0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 2, 0, 0, 0];
+
+      const el = {
+        promptLine: document.getElementById("promptLine"),
+        userIdInput: document.getElementById("userIdInput"),
+        hatchButton: document.getElementById("hatchButton"),
+        randomButton: document.getElementById("randomButton"),
+        animateButton: document.getElementById("animateButton"),
+        speciesName: document.getElementById("speciesName"),
+        rarityStars: document.getElementById("rarityStars"),
+        companionName: document.getElementById("companionName"),
+        personality: document.getElementById("personality"),
+        sprite: document.getElementById("sprite"),
+        facePill: document.getElementById("facePill"),
+        profileGrid: document.getElementById("profileGrid"),
+        statsGrid: document.getElementById("statsGrid"),
+        rarityName: document.getElementById("rarityName"),
+        hatchedAt: document.getElementById("hatchedAt"),
+        seedValue: document.getElementById("seedValue"),
+        shinyValue: document.getElementById("shinyValue"),
+        animState: document.getElementById("animState"),
+        jsonOutput: document.getElementById("jsonOutput"),
+        speciesGrid: document.getElementById("speciesGrid")
+      };
+
+      let currentUserId = "alice";
+      let currentCompanion = null;
+      let animationTimer = null;
+      let forcedSpecies = null;
+      let tick = 0;
+
+      function mulberry32(seed) {
+        let a = seed >>> 0;
+        return function () {
+          a |= 0;
+          a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function hashString(value) {
+        let h = 2166136261;
+        for (let i = 0; i < value.length; i++) {
+          h ^= value.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+
+      function pick(rng, arr) {
+        return arr[Math.floor(rng() * arr.length)];
+      }
+
+      function rollRarity(rng) {
+        const total = Object.values(RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
+        let roll = rng() * total;
+        for (const rarity of RARITIES) {
+          roll -= RARITY_WEIGHTS[rarity];
+          if (roll < 0) return rarity;
+        }
+        return "common";
+      }
+
+      function rollStats(rng, rarity) {
+        const floor = RARITY_FLOOR[rarity];
+        const peak = pick(rng, STAT_NAMES);
+        let dump = pick(rng, STAT_NAMES);
+        while (dump === peak) dump = pick(rng, STAT_NAMES);
+        const stats = {};
+        for (const name of STAT_NAMES) {
+          if (name === peak) stats[name] = Math.min(100, floor + 50 + Math.floor(rng() * 30));
+          else if (name === dump) stats[name] = Math.max(1, floor - 10 + Math.floor(rng() * 15));
+          else stats[name] = floor + Math.floor(rng() * 40);
+        }
+        return stats;
+      }
+
+      function generateSoul(seed, species) {
+        const rng = mulberry32(hashString(`soul:${seed}:${species}`));
+        const adjective = pick(rng, ADJECTIVES);
+        const title = pick(rng, TITLES);
+        const suffix = Math.floor(rng() * 90 + 10);
+        const mood = pick(rng, ["terminal-side", "bug-hunting", "log-watching"]);
+        return {
+          name: `${adjective[0].toUpperCase()}${adjective.slice(1)} ${title} ${suffix}`,
+          personality: `${adjective[0].toUpperCase()}${adjective.slice(1)}, dependable, ${mood}`
+        };
+      }
+
+      function rollCompanion(userId) {
+        const rng = mulberry32(hashString(`${userId}friend-2026-401`));
+        const rarity = rollRarity(rng);
+        const bones = {
+          rarity,
+          species: pick(rng, SPECIES),
+          eye: pick(rng, EYES),
+          hat: rarity === "common" ? "none" : pick(rng, HATS),
+          shiny: rng() < 0.01,
+          stats: rollStats(rng, rarity)
+        };
+        return { bones, inspirationSeed: Math.floor(rng() * 1e9) };
+      }
+
+      function hatchTimestamp(userId) {
+        const days = hashString(userId);
+        return Date.UTC(2026, 3, 1) + (days % 365) * 86400000;
+      }
+
+      function formatDate(timestamp) {
+        return new Date(timestamp).toISOString().replace("T", " ").slice(0, 19) + " UTC";
+      }
+
+      function renderSprite(companion, frame, blink = false) {
+        const frames = BODIES[companion.species];
+        const selected = frames[frame % frames.length].map((line) => line.replaceAll("{E}", companion.eye));
+        const lines = [...selected];
+        if (companion.hat !== "none" && !lines[0].trim()) lines[0] = HAT_LINES[companion.hat];
+        if (!lines[0].trim() && frames.every((f) => !f[0].trim())) lines.shift();
+        return lines.map((line) => (blink ? line.replaceAll(companion.eye, "-") : line));
+      }
+
+      function renderFace(companion) {
+        switch (companion.species) {
+          case "duck":
+          case "goose":
+            return `(${companion.eye}>)`;
+          case "blob":
+            return `(${companion.eye}${companion.eye})`;
+          case "cat":
+            return `=${companion.eye}ω${companion.eye}=`;
+          case "dragon":
+            return `<${companion.eye}~${companion.eye}>`;
+          case "octopus":
+            return `~(${companion.eye}${companion.eye})~`;
+          case "owl":
+            return `(${companion.eye})(${companion.eye})`;
+          case "penguin":
+            return `(${companion.eye}>)`;
+          case "turtle":
+            return `[${companion.eye}_${companion.eye}]`;
+          case "snail":
+            return `${companion.eye}(@)`;
+          case "ghost":
+            return `/${companion.eye}${companion.eye}\\`;
+          case "axolotl":
+            return `}${companion.eye}.${companion.eye}{`;
+          case "capybara":
+            return `(${companion.eye}oo${companion.eye})`;
+          case "cactus":
+            return `|${companion.eye}  ${companion.eye}|`;
+          case "robot":
+            return `[${companion.eye}${companion.eye}]`;
+          case "rabbit":
+            return `(${companion.eye}..${companion.eye})`;
+          case "mushroom":
+            return `|${companion.eye}  ${companion.eye}|`;
+          case "chonk":
+            return `(${companion.eye}.${companion.eye})`;
+        }
+      }
+
+      function statColor(name) {
+        if (name === "DEBUGGING" || name === "CHAOS") return "var(--danger)";
+        if (name === "PATIENCE") return "var(--warn)";
+        if (name === "WISDOM" || name === "SNARK") return "var(--violet)";
+        return "var(--green)";
+      }
+
+      function applyCompanion(userId) {
+        currentUserId = userId;
+        const rolled = rollCompanion(userId);
+        const soul = generateSoul(userId, rolled.bones.species);
+        currentCompanion = {
+          userId,
+          soul,
+          bones: rolled.bones,
+          inspirationSeed: rolled.inspirationSeed,
+          hatchedAt: formatDate(hatchTimestamp(userId))
+        };
+        tick = 0;
+        renderCard(0, false);
+        renderSpeciesChips();
+      }
+
+      function renderCard(frame = 0, blink = false) {
+        if (!currentCompanion) return;
+        const { bones, inspirationSeed, hatchedAt, userId } = currentCompanion;
+        const displayBones = forcedSpecies ? { ...bones, species: forcedSpecies } : bones;
+        const soul = generateSoul(userId, displayBones.species);
+        const speciesName = displayBones.species[0].toUpperCase() + displayBones.species.slice(1);
+
+        el.promptLine.textContent = `node buddy-standalone/main.ts hatch ${userId}`;
+        el.speciesName.textContent = displayBones.shiny ? `✨ ${speciesName}` : speciesName;
+        el.rarityStars.textContent = RARITY_STARS[displayBones.rarity];
+        el.companionName.textContent = soul.name;
+        el.personality.textContent = soul.personality;
+        el.sprite.textContent = renderSprite(displayBones, frame, blink).join("\n");
+        el.facePill.textContent = `Eye: ${displayBones.eye}    Hat: ${displayBones.hat === "none" ? "-" : displayBones.hat}    Face: ${renderFace(displayBones)}`;
+        el.rarityName.textContent = displayBones.rarity.toUpperCase() + (displayBones.shiny ? "  ✦ SHINY" : "");
+        el.hatchedAt.textContent = `Hatched: ${hatchedAt}`;
+        el.seedValue.textContent = String(inspirationSeed);
+        el.shinyValue.textContent = displayBones.shiny ? "Yes" : "No";
+        el.profileGrid.innerHTML = `
+          <div class="data-row"><span>Species</span><span>${speciesName}</span></div>
+          <div class="data-row"><span>Rarity</span><span>${displayBones.rarity}</span></div>
+          <div class="data-row"><span>Eye / Hat</span><span>${displayBones.eye} / ${displayBones.hat}</span></div>
+        `;
+        el.statsGrid.innerHTML = STAT_NAMES.map((name) => `
+          <div class="stat">
+            <div class="stat-label">${name}</div>
+            <div class="track"><div class="fill" style="width:${displayBones.stats[name]}%;background:${statColor(name)}"></div></div>
+            <div>${displayBones.stats[name]}</div>
+          </div>
+        `).join("");
+        el.jsonOutput.textContent = JSON.stringify({ ...currentCompanion, soul, bones: displayBones }, null, 2);
+      }
+
+      function renderSpeciesChips() {
+        el.speciesGrid.innerHTML = SPECIES.map((species) => `
+          <button class="species-chip ${((forcedSpecies || (currentCompanion && currentCompanion.bones.species)) === species) ? "active" : ""}" data-species="${species}">
+            ${species}
+          </button>
+        `).join("");
+
+        el.speciesGrid.querySelectorAll(".species-chip").forEach((button) => {
+          button.addEventListener("click", () => {
+            forcedSpecies = button.dataset.species || null;
+            renderCard(0, false);
+            renderSpeciesChips();
+          });
+        });
+      }
+
+      function stopAnimation() {
+        if (animationTimer) {
+          clearInterval(animationTimer);
+          animationTimer = null;
+        }
+        el.animState.textContent = "Idle";
+        el.animateButton.textContent = "Start Animation";
+      }
+
+      function startAnimation() {
+        stopAnimation();
+        el.animState.textContent = "Running";
+        el.animateButton.textContent = "Stop Animation";
+        animationTimer = setInterval(() => {
+          const step = IDLE_SEQUENCE[tick % IDLE_SEQUENCE.length];
+          const blink = step === -1;
+          const frame = blink ? 0 : step % 3;
+          renderCard(frame, blink);
+          tick += 1;
+        }, 500);
+      }
+
+      function randomUserId() {
+        return `user-${Math.random().toString(36).slice(2, 10)}`;
+      }
+
+      el.hatchButton.addEventListener("click", () => {
+        stopAnimation();
+        forcedSpecies = null;
+        applyCompanion(el.userIdInput.value.trim() || "alice");
+      });
+
+      el.randomButton.addEventListener("click", () => {
+        const value = randomUserId();
+        el.userIdInput.value = value;
+        stopAnimation();
+        forcedSpecies = null;
+        applyCompanion(value);
+      });
+
+      el.animateButton.addEventListener("click", () => {
+        if (animationTimer) stopAnimation();
+        else startAnimation();
+      });
+
+      el.userIdInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          stopAnimation();
+          forcedSpecies = null;
+          applyCompanion(el.userIdInput.value.trim() || "alice");
+        }
+      });
+
+      applyCompanion("alice");
+    </script>
+  </body>
+</html>

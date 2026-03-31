@@ -1,0 +1,10 @@
+{
+  "name": "buddy-standalone-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cli": "node main.ts help",
+    "start": "python3 -m http.server 4173",
+    "preview": "python3 -m http.server 4173"
+  }
+}
