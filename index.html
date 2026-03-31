@@ -492,6 +492,7 @@
       let animationTimer = null;
       let forcedSpecies = null;
       let tick = 0;
+      const ANIMATION_INTERVAL_MS = 220;
 
       function mulberry32(seed) {
         let a = seed >>> 0;
@@ -710,13 +711,17 @@
         stopAnimation();
         el.animState.textContent = "Running";
         el.animateButton.textContent = "Stop Animation";
-        animationTimer = setInterval(() => {
+        const renderNextFrame = () => {
           const step = IDLE_SEQUENCE[tick % IDLE_SEQUENCE.length];
           const blink = step === -1;
           const frame = blink ? 0 : step % 3;
           renderCard(frame, blink);
           tick += 1;
-        }, 500);
+        };
+        renderNextFrame();
+        animationTimer = setInterval(() => {
+          renderNextFrame();
+        }, ANIMATION_INTERVAL_MS);
       }
 
       function randomUserId() {
